@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 关键配置：禁用重复的appender定义 -->
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
+
+    <!-- 彩色控制台控制 -->
+    <substitutionProperty name="log.pattern" value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) ${PID:-} %clr(---){faint} %clr(%-80.80logger{79}){cyan} %clr(:){faint} %m%n%wEx"/>
+    <substitutionProperty name="log.pattern.no" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %5p ${PID:-} --- %-80.80logger{79} : %m%n%wEx"/>
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+    <conversionRule conversionWord="wex" converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
+    <conversionRule conversionWord="wEx" converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
+    
+    <!-- SkyWalking TraceId 转换器 -->
+
+
+    <springProperty scope="context" name="LOG_FILE_DIR" source="logback.log-file-dir" defaultValue="./logs"/>
+    <springProperty scope="context" name="url" source="loki.url" defaultValue="http://www.bigprime.cn:3100/loki/api/v1/push"/>
+    <springProperty scope="context" name="env" source="loki.label.env" defaultValue="${LOKI_ENV:dev}"/>
+    <springProperty scope="context" name="application" source="loki.label.application" defaultValue="bigprime-datasync"/>
+    <springProperty scope="context" name="hostIp" source="loki.label.host-ip" defaultValue="${LOKI_HOST_IP:localhost}"/>
+    <springProperty scope="context" name="orgId" source="loki.org-id" defaultValue="${LOKI_ORG_ID:default-org}"/>
+
+    <!-- 控制台输出 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${log.pattern}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Loki日志发送器 -->
+    <!-- dropRatioOnError=1：推送失败时直接丢弃，防止 Loki 不可用导致 Spring Boot 启动失败 -->
+    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+        <http>
+            <url>${url}</url>
+            <requestTimeoutMs>3000</requestTimeoutMs>
+        </http>
+        <dropRatioOnError>1</dropRatioOnError>
+        <format>
+            <label>
+                <pattern>application=${application},env=${env},host=${hostIp},level=%level,trace_id=-</pattern>
+            </label>
+            <message>
+                <pattern>
+                    {"timestamp": "%d{yyyy-MM-dd HH:mm:ss.SSS}", "level": "%level", "logger": "%logger{36}", "thread": "%thread", "trace_id": "-", "dag_execution_id": "%X{dagExecutionId}", "message": "%msg%n"}
+                </pattern>
+            </message>
+            <sortByTime>true</sortByTime>
+        </format>
+    </appender>
+
+    <!-- 文件输出 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${log.pattern.no}</pattern>
+        </encoder>
+        <!--滚动策略-->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!--路径-->
+            <fileNamePattern>${LOG_FILE_DIR}/${application}.log.%d.log</fileNamePattern>
+            <!--保留日志天数，可通过环境变量配置-->
+            <maxHistory>${LOG_MAX_HISTORY:30}</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <!-- Nacos心跳日志降级 -->
+    <logger name="com.alibaba.nacos.client.naming" level="WARN" />
+    <logger name="com.alibaba.nacos.client" level="WARN" />
+
+    <!-- local/dev 环境只输出到控制台和文件，不推送 Loki（避免 Loki 不可用导致启动失败） -->
+    <springProfile name="local,dev">
+        <root level="info">
+            <appender-ref ref="CONSOLE" />
+            <appender-ref ref="FILE" />
+        </root>
+    </springProfile>
+
+    <!-- 非 local/dev 环境（test/prod）额外推送 Loki -->
+    <springProfile name="!local &amp;&amp; !dev">
+        <root level="info">
+            <appender-ref ref="CONSOLE" />
+            <appender-ref ref="FILE" />
+            <appender-ref ref="LOKI" />
+        </root>
+    </springProfile>
+
+</configuration>
+

@@ -1,0 +1,30 @@
+export default {
+    'menu.action': 'UDF管理',
+    'menu.action.list': 'UDF',
+
+    'action.clazz': '实现类',
+    'action.paramClazz': '参数类',
+    'action.version': '版本',
+    'action.namespace': '命名空间',
+    'action.fstCategory': '一级分类',
+    'action.sndCategory': '二级分类',
+    'action.trdCategory': '三级分类',
+    'action.fthCategory': '四级分类',
+    'action.code': '编码',
+    'action.name': '标题',
+    'action.status': '状态',
+    'action.description': '描述',
+    'action.param.config': '参数配置',
+    'action.authorName': '创建人',
+    'action.registerTime': '注册时间',
+    'action.updateTime': '更新时间',
+
+
+    'action.param.name': '参数名',
+    'action.param.title': '参数标题',
+    'action.param.required': '必填',
+    'action.param.valueType': '值类型',
+    'action.param.componentType': '组件类型',
+    'action.param.defaultValue': '默认值',
+    'action.param.componentConfig': '组件配置',
+}

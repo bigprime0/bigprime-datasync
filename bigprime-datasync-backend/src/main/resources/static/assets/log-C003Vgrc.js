@@ -1,0 +1,1 @@
+import{s as t}from"./index-DXYdVmoq.js";function i(o){return t({url:"/api/log/query",method:"post",data:o})}function n(){return t({url:"/api/log/test-connection",method:"get"})}function r(){return t({url:"/api/log/loki-info",method:"get"})}function s(o){return t({url:"/api/log/statistics",method:"post",data:o})}export{s as a,r as g,i as q,n as t};

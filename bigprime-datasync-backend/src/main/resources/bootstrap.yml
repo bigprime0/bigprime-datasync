@@ -1,0 +1,201 @@
+#datasync站点
+server:
+  port: 6506
+  tomcat:
+    # 完全禁用JSP支持，避免javax.servlet与jakarta.servlet冲突
+    additional-tld-skip-patterns: "*.jar"
+    # 禁用JSP servlet注册
+    jsp-servlet:
+      registered: false
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  mvc:
+    servlet:
+      load-on-startup: 1
+  application:
+    name: bigprime-datasync
+  profiles:
+    active: dev
+#  # 强制覆盖 Redis 配置（优先级高于 Nacos）
+#  data:
+#    redis:
+#      host: 47.97.255.119
+#      port: 6379
+#      password: redis_32EF4p
+#      database: 8
+#      timeout: 10000
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${nacos_host:127.0.0.1}:${nacos_port:8848}
+        # 命名空间，默认：public
+        namespace: ${nacos_namespace:bigprime-datasync}
+        service: ${spring.application.name}
+      config:
+        server-addr: ${spring.cloud.nacos.discovery.server-addr}
+        namespace: ${spring.cloud.nacos.discovery.namespace}
+        file-extension: yaml
+        # 指定配置
+        extension-configs:
+          - data-id: bigprime.yaml
+            refresh: true
+  servlet:
+    multipart:
+      max-request-size: 100MB
+      max-file-size: 1024MB
+  # 静态资源配置 - 外部 backend/static 优先，兜底 classpath
+  web:
+    resources:
+      static-locations:
+        - file:${BACKEND_HOME:${APP_HOME:${user.dir}}}/static/
+        - classpath:/static/
+  # Spring AI MCP Server 配置
+  ai:
+    mcp:
+      server:
+        enabled: true
+        name: bigprime-datasync-mcp
+        version: 1.0.0
+        base-url: ""           # 路径前缀（空=无前缀）
+        sse-endpoint: /mcp/sse          # SSE 连接端点
+        sse-message-endpoint: /mcp/messages   # 消息端点
+
+# feign 配置
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 600000
+        readTimeout: 600000
+        loggerLevel: basic
+  okhttp:
+    enabled: true
+
+logging:
+  # 只有配置了日志文件，才能被监控收集
+  file:
+    name: logs/${spring.application.name}.log
+
+# Loki 日志配置
+loki:
+  url: ${LOKI_URL:http://47.97.255.119:3100/loki/api/v1/push}
+  label:
+    env: dev
+    application: bigprime-datasync
+    host-ip: ${HOSTNAME:localhost}
+  org-id: default-org
+
+#  endpoints config
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  # 禁用 Redis 健康检查，避免无 Redis 环境时启动失败
+  health:
+    redis:
+      enabled: false
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      host: ${HOSTNAME:localhost}
+      instance: ${spring.cloud.client.ip-address:localhost}:${server.port}
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+# Python Web 模块配置
+python:
+  # 运行时类型: embedded(内置 Python，随包自带) | system(系统已安装的 Python)
+  runtime-type: embedded
+  embedded:
+    python-path: ${APP_HOME:${user.dir}}/plugins/python-runtime/bin/python3
+    pip-path: ${APP_HOME:${user.dir}}/plugins/python-runtime/bin/pip3
+    kernel-gateway-path: ${APP_HOME:${user.dir}}/plugins/python-runtime/bin/jupyter-kernelgateway
+  system:
+    python-path: python3
+    pip-path: pip3
+    kernel-gateway-path: jupyter-kernelgateway
+  kernel-gateway:
+    host: localhost
+    port: 8866
+    auto-start: true
+    start-timeout: 60
+    idle-timeout-minutes: 30
+  workspace:
+    base-path: ${APP_HOME:${user.dir}}/python/workspaces
+    max-count-per-user: 10
+    max-storage-mb: 500
+
+# 查询模块配置
+query:
+  # SQL安全配置
+  security:
+    max-query-rows: 10000  # 单次查询最大行数
+    query-timeout: 30      # 查询超时时间(秒)
+  
+  # 历史记录配置
+  history:
+    max-records-per-user: 100  # 每个用户最大保留记录数
+    retention-days: 30         # 记录保留天数
+
+# DAG执行模式配置
+dag:
+  executor:
+    # 执行模式: http(同步) 或 mq(异步)
+    # http模式: 使用HTTP直连调用Worker，从集群管理中心动态选择Worker节点（支持负载均衡）
+    # mq模式: 使用RabbitMQ异步调用Worker
+    mode: http
+    # MQ配置(仅在mode=mq时生效)
+    mq:
+      exchange: dag.execution.exchange
+      request-queue: dag.execution.request
+      response-queue: dag.execution.response
+      request-routing-key: dag.execution.request
+      response-routing-key: dag.execution.response
+
+# Worker负载均衡配置
+worker:
+  loadbalance:
+    # 负载均衡策略: RANDOM(随机), ROUND_ROBIN(轮询), LEAST_ACTIVE(最少任务), WEIGHTED(加权), RESOURCE_BASED(资源智能调度)
+    strategy: RESOURCE_BASED
+    
+    # 容量预留配置
+    capacity-reserve: true        # 是否启用容量预留
+    reserve-percentage: 20        # 预留百分比(0-100)，默认20%
+    
+    # 健康检查配置
+    health-check: true            # 是否启用健康检查
+    health-check-timeout: 3       # 健康检查超时时间(秒)
+    max-retry: 3                  # 故障转移最大重试次数
+    
+    # 资源阈值配置
+    resource-based: true          # 是否启用基于资源的调度
+    cpu-threshold: 80             # CPU使用率阈值(%)
+    memory-threshold: 80          # 内存使用率阈值(%)
+    
+    # 资源权重配置（用于RESOURCE_BASED策略）
+    resource-weight:
+      cpu: 0.3                    # CPU权重(0-1)
+      memory: 0.3                 # 内存权重(0-1)
+      task-load: 0.4              # 任务负载权重(0-1)
+    
+    # 标签优先级配置（标签名: 优先级，数值越大优先级越高）
+    tag-priority:
+      high-performance: 100       # 高性能标签
+      gpu-enabled: 90             # GPU可用标签
+      normal: 50                  # 普通标签
+      low-cost: 10                # 低成本标签
+    
+    # 告警配置
+    alert-enabled: true           # 是否启用告警
+    alert-threshold: 3            # Worker不可用告警阈值(连续失败次数)

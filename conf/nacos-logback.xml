@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- 定义Nacos专用的日志格式 -->
+    <property name="LOG_HOME" value="./logs/nacos"/>
+    <property name="FILE_LOG_PATTERN" value="%date{yyyy-MM-dd HH:mm:ss.SSS} %-5level %thread %logger{96} %msg%n"/>
+
+    <!-- 控制台输出 -->
+    <appender name="NACOS_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Nacos Config日志文件输出 -->
+    <appender name="NACOS_CONFIG_LOG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/nacos-config.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HOME}/nacos-config.log.%d{yyyy-MM-dd}
+            </fileNamePattern>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Nacos Naming日志文件输出 -->
+    <appender name="NACOS_NAMING_LOG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/nacos-naming.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HOME}/nacos-naming.log.%d{yyyy-MM-dd}
+            </fileNamePattern>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 设置Nacos相关包的日志级别 -->
+    <logger name="com.alibaba.nacos" level="INFO" additivity="false">
+        <appender-ref ref="NACOS_CONSOLE"/>
+        <appender-ref ref="NACOS_CONFIG_LOG_FILE"/>
+        <appender-ref ref="NACOS_NAMING_LOG_FILE"/>
+    </logger>
+
+    <!-- 设置Nacos Config相关类的日志 -->
+    <logger name="com.alibaba.nacos.config" level="INFO" additivity="false">
+        <appender-ref ref="NACOS_CONFIG_LOG_FILE"/>
+    </logger>
+
+    <!-- 设置Nacos Naming相关类的日志 -->
+    <logger name="com.alibaba.nacos.naming" level="INFO" additivity="false">
+        <appender-ref ref="NACOS_NAMING_LOG_FILE"/>
+    </logger>
+
+    <!-- 根日志配置 -->
+    <root level="INFO">
+        <appender-ref ref="NACOS_CONSOLE"/>
+    </root>
+</configuration>

@@ -1,0 +1,583 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.bigprime</groupId>
+        <artifactId>bigprime-datasync</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>bigprime-datasync-backend</artifactId>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <java.version>17</java.version>
+    </properties>
+
+    <dependencies>
+        <!-- JiaJiaOCR OCR引擎（本地安装到Maven仓库） -->
+        <dependency>
+            <groupId>com.jiajia</groupId>
+            <artifactId>jiajia-ocr</artifactId>
+            <version>2.0.2</version>
+        </dependency>
+
+        <!-- ONNX Runtime：JiaJiaOCR模型推理核心 -->
+        <dependency>
+            <groupId>com.microsoft.onnxruntime</groupId>
+            <artifactId>onnxruntime</artifactId>
+            <version>1.19.0</version>
+        </dependency>
+
+        <!-- DJL MXNet引擎 -->
+        <dependency>
+            <groupId>ai.djl.mxnet</groupId>
+            <artifactId>mxnet-engine</artifactId>
+            <version>0.31.0</version>
+        </dependency>
+
+        <!-- DJL OpenCV图像处理 -->
+        <dependency>
+            <groupId>ai.djl.opencv</groupId>
+            <artifactId>opencv</artifactId>
+            <version>0.31.0</version>
+        </dependency>
+
+        <!-- DJL核心API -->
+        <dependency>
+            <groupId>ai.djl</groupId>
+            <artifactId>api</artifactId>
+            <version>0.31.0</version>
+        </dependency>
+
+        <!-- PDFBox：PDF转图片 -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.2</version>
+        </dependency>
+
+        <!-- bigprime-action-impl -->
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>bigprime-action-impl</artifactId>
+            <version>${project.version}</version>
+            <exclusions>
+                <!-- 代码已合并进 bigprime-datasync-core，排除旧jar避免RedisCache Bean冲突 -->
+                <exclusion>
+                    <groupId>com.bigprime</groupId>
+                    <artifactId>bigprime-das-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- Spring Boot Web Starter -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <exclusions>
+                <!-- 排除Jetty，保留Tomcat -->
+                <exclusion>
+                    <groupId>org.eclipse.jetty</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.eclipse.jetty.websocket</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <!-- 排除JSP支持（不需要） -->
+                <exclusion>
+                    <groupId>org.apache.tomcat.embed</groupId>
+                    <artifactId>tomcat-embed-jasper</artifactId>
+                </exclusion>
+                <!-- 排除spring-boot-starter-logging，使用自定义日志配置 -->
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        
+        <!-- Spring Cache 缓存支持 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+        
+        <!-- Caffeine 本地缓存（替代 Redis，更轻量） -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
+        <!-- Spring Cloud依赖 -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter</artifactId>
+            <exclusions>
+                <!-- 排除log4j相关依赖 -->
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-to-slf4j</artifactId>
+                </exclusion>
+                <!-- 排除slf4j-reload4j -->
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-reload4j</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- Spring Cloud Alibaba Nacos Discovery -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+            <exclusions>
+                <!-- 排除log4j相关依赖 -->
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-to-slf4j</artifactId>
+                </exclusion>
+                <!-- 排除slf4j-reload4j -->
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-reload4j</artifactId>
+                </exclusion>
+                <!-- 排除Jetty -->
+                <exclusion>
+                    <groupId>org.eclipse.jetty</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- 日志相关依赖 - 使用 Spring Boot 3.2 默认的 Logback -->
+        <!-- 桥接 Log4j2 API 到 SLF4J，避免 "Log4j2 could not find a logging implementation" 错误 -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-to-slf4j</artifactId>
+        </dependency>
+
+        <!-- Action模块依赖 -->
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>bigprime-action-core</artifactId>
+            <version>1.0.0</version>
+            <exclusions>
+                <!-- 排除 reflections 传递进来的 log4j-slf4j2-impl，避免与 Spring Boot 日志冲突 -->
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j2-impl</artifactId>
+                </exclusion>
+                <!-- 排除旧版 bigprime-das-core，该包已废弃，功能已迁移至 bigprime-datasync-core -->
+                <exclusion>
+                    <groupId>com.bigprime</groupId>
+                    <artifactId>bigprime-das-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>bigprime-action-interface</artifactId>
+            <version>1.0.0</version>
+            <exclusions>
+                <!-- 排除旧版 bigprime-das-core，该包已废弃，功能已迁移至 bigprime-datasync-core -->
+                <exclusion>
+                    <groupId>com.bigprime</groupId>
+                    <artifactId>bigprime-das-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- Action Flink模块依赖 -->
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>flink-action-1.16</artifactId>
+            <version>1.0.0</version>
+            <exclusions>
+                <!-- 排除旧版 bigprime-das-core，该包已废弃，功能已迁移至 bigprime-datasync-core -->
+                <exclusion>
+                    <groupId>com.bigprime</groupId>
+                    <artifactId>bigprime-das-core</artifactId>
+                </exclusion>
+                <!-- 排除 flink-connector-kafka 传递的旧版 kafka-clients，由 bigprime-connector 统一指定 3.9.0 -->
+                <exclusion>
+                    <groupId>org.apache.kafka</groupId>
+                    <artifactId>kafka-clients</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- kafka-clients 3.9.0 完整支持 Kafka 4.0 KRaft + KIP-848 新协调协议 -->
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>3.9.0</version>
+        </dependency>
+
+        <!-- DAG模块依赖 -->
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>bigprime-datasync-dag-core</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        
+        <!-- Gateway模块依赖 -->
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>gateway-api</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>gateway-core</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        
+        <!-- Query模块依赖 -->
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>bigprime-datasync-query</artifactId>
+            <version>1.0.0</version>
+            <exclusions>
+                <!-- 排除旧版 bigprime-das-core，该包已废弃，功能已迁移至 bigprime-datasync-core -->
+                <exclusion>
+                    <groupId>com.bigprime</groupId>
+                    <artifactId>bigprime-das-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        
+        <!-- FastJSON2 依赖（血缘模块需要） -->
+        <dependency>
+            <groupId>com.alibaba.fastjson2</groupId>
+            <artifactId>fastjson2</artifactId>
+            <version>2.0.43</version>
+        </dependency>
+        <!-- SpringDoc OpenAPI - Spring Boot 3 兼容版本 -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.1.0</version>
+        </dependency>
+        <!-- 强制覆盖 volcengine-java-sdk 引入的旧版 swagger-annotations 2.0.0，确保 Schema.RequiredMode 可用 -->
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-annotations</artifactId>
+            <version>2.2.14</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>bigprime-datasync-core</artifactId>
+            <version>1.0.0</version>
+            <exclusions>
+                <!-- 排除log4j2 starter，使用Spring Boot默认的logback -->
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-log4j2</artifactId>
+                </exclusion>
+                <!-- 排除所有log4j相关依赖 -->
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <!-- 排除slf4j-reload4j，使用Logback -->
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-reload4j</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>dev.tinyflow</groupId>
+            <artifactId>tinyflow-java-core</artifactId>
+            <version>1.2.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>bigprime-connector</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+            <exclusions>
+                <!-- 排除log4j相关依赖，防止与Logback冲突 -->
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <!-- 排除slf4j-reload4j -->
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-reload4j</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- 血缘模块依赖 -->
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>lineage-core</artifactId>
+            <version>1.0.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+                <!-- 排除旧版 bigprime-das-core，该包已废弃，功能已迁移至 bigprime-datasync-core -->
+                <exclusion>
+                    <groupId>com.bigprime</groupId>
+                    <artifactId>bigprime-das-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- Hadoop 引入的 reload4j 排除，统一使用 Logback -->
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
+            <version>3.4.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>ch.qos.reload4j</groupId>
+                    <artifactId>reload4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-reload4j</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- 日志管理模块依赖 -->
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>log-management-core</artifactId>
+            <version>1.0.0</version>
+            <exclusions>
+                <!-- 排除旧版 bigprime-das-core，该包已废弃，功能已迁移至 bigprime-datasync-core -->
+                <exclusion>
+                    <groupId>com.bigprime</groupId>
+                    <artifactId>bigprime-das-core</artifactId>
+                </exclusion>
+                <!-- das-core 传递进来的 log4j-slf4j2-impl，与 Spring Boot 日志冲突 -->
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j2-impl</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- 集群管理模块依赖 -->
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>bigprime-cluster-management</artifactId>
+            <version>1.0.0</version>
+            <exclusions>
+                <!-- 排除旧版 bigprime-das-core，该包已废弃，功能已迁移至 bigprime-datasync-core -->
+                <exclusion>
+                    <groupId>com.bigprime</groupId>
+                    <artifactId>bigprime-das-core</artifactId>
+                </exclusion>
+                <!-- das-core 传递进来的 log4j-slf4j2-impl，与 Spring Boot 日志冲突 -->
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j2-impl</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- 告警中心模块依赖 -->
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>alert-center-api</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>alert-center-core</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>alert-center-storage</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <!-- Spring Boot WebSocket（支持集群管理模块） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+            <exclusions>
+                <!-- 排除Jetty，使用Tomcat -->
+                <exclusion>
+                    <groupId>org.eclipse.jetty</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.eclipse.jetty.websocket</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <!-- 排除spring-boot-starter-logging，避免与主模块日志冲突 -->
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- Loki4j依赖 -->
+        <dependency>
+            <groupId>com.github.loki4j</groupId>
+            <artifactId>loki-logback-appender</artifactId>
+            <version>1.3.2</version>
+        </dependency>
+        <!-- Loki 日志发送 HTTP 请求工具 -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.14</version>
+        </dependency>
+
+        <!-- Prometheus Metrics 依赖 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <!-- SkyWalking 链路跟踪工具包（匹配后端 9.4.0 版本） -->
+        <dependency>
+            <groupId>org.apache.skywalking</groupId>
+            <artifactId>apm-toolkit-trace</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.skywalking</groupId>
+            <artifactId>apm-toolkit-logback-1.x</artifactId>
+        </dependency>
+
+        <!-- AI 核心模块 -->
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>bigprime-ai-core</artifactId>
+            <version>1.0.0</version>
+            <exclusions>
+                <!-- 排除Spring AI自动配置，由bigprime-ai-core自行管理 -->
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- AI 用量统计模块 -->
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>bigprime-ai-usage</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <!-- AI API 密钥管理模块 -->
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>bigprime-ai-api</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <!-- AI 网络搜索模块 -->
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>bigprime-ai-search</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <!-- AI 知识库模块 -->
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>bigprime-ai-knowledge</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <!-- AI 记忆系统模块 -->
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>bigprime-ai-memory</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <!-- AI 技能管理模块 -->
+        <dependency>
+            <groupId>com.bigprime</groupId>
+            <artifactId>bigprime-ai-skill</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Maven Dependency Plugin: 复制依赖到target/lib目录 (必须在spring-boot之前) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                            <includeScope>runtime</includeScope>
+                            <excludeTransitive>false</excludeTransitive>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <!-- Spring Boot Maven Plugin -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <!-- 将依赖复制到target/lib目录，用于Apache风格打包 -->
+                    <layout>ZIP</layout>
+                    <includes>
+                        <include>
+                            <groupId>nothing</groupId>
+                            <artifactId>nothing</artifactId>
+                        </include>
+                    </includes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <!-- Backend 打包由根项目统一控制，不在此处配置 assembly -->
+        </plugins>
+    </build>
+</project>

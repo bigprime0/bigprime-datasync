@@ -1,0 +1,52 @@
+# Action Worker Bootstrap配置
+# 此配置在Spring Boot启动的bootstrap阶段加载，用于从Nacos获取配置
+
+server:
+  port: 6505
+
+spring:
+  application:
+    name: bigprime-action-worker
+  profiles:
+    active: dev
+  # 允许Bean定义覆盖（解决SecurityFilterConfig和WebSecurityConfig冲突）
+  main:
+    allow-bean-definition-overriding: true
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${nacos_host:127.0.0.1}:${nacos_port:8848}
+        # 命名空间，默认：public
+        namespace: ${nacos_namespace:bigprime}
+        service: ${spring.application.name}
+        # 使用临时实例（ephemeral=true 使用 gRPC，ephemeral=false 使用 HTTP）
+        # 如遇 gRPC 兼容问题，可设置为 false 使用 HTTP 方式
+        ephemeral: true
+      config:
+        server-addr: ${spring.cloud.nacos.discovery.server-addr}
+        namespace: ${spring.cloud.nacos.discovery.namespace}
+        file-extension: yaml
+        # 指定配置
+        extension-configs:
+          - data-id: bigprime.yaml
+            refresh: true
+        # 启用远程配置覆盖本地配置
+        override-none: false
+
+# Action执行引擎Worker节点配置
+action:
+  worker:
+    # 工作节点ID，每个实例必须有唯一的ID
+    id: ${WORKER_ID:worker-${random.uuid}}
+    name: Action Worker Node
+    description: 分布式Action执行引擎工作节点
+    max-concurrent-tasks: ${WORKER_MAX_TASKS:10}
+
+logging:
+  level:
+    root: INFO
+    com.bigprime.action: DEBUG
+    com.alibaba.nacos: INFO
+    org.springframework.cloud.bootstrap: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

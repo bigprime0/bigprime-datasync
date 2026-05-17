@@ -1,0 +1,323 @@
+<template>
+  <div class="layout">
+    <tiny-container :aside-width="appStore.menu !== false ? 250 : 0" :header-height="appStore.navbar !== false ? 60 : 0">
+      <template v-if="appStore.navbar !== false" #header>
+        <tiny-layout>
+          <div class="layout-navbar">
+            <NavBar />
+          </div>
+        </tiny-layout>
+      </template>
+      <template v-if="appStore.menu !== false" #aside>
+        <tiny-layout class="layout-sider">
+          <div class="menu-wrapper">
+            <Menu />
+          </div>
+        </tiny-layout>
+      </template>
+      <tiny-layout class="layout-content">
+        <PageLayout />
+      </tiny-layout>
+    </tiny-container>
+    <div v-if="disTheme">
+      <tiny-modal
+          v-model="disTheme"
+          :lock-scroll="true"
+          show-header
+          show-footer
+          :title="$t('theme.title.main')"
+          mask-closable="true"
+          height="922"
+          width="748"
+      >
+        <template #default>
+          <Theme />
+        </template>
+        <template #footer></template>
+      </tiny-modal>
+    </div>
+    <img
+        v-if="!appStore.navbar"
+        src="@/assets/images/global.png"
+        class="global-setting"
+        @click="switchSet"
+    />
+  </div>
+</template>
+
+<script lang="ts" setup>
+import { ref, watch, onMounted } from 'vue';
+import {
+  Container as TinyContainer,
+  Layout as TinyLayout,
+  Modal as tinyModal,
+} from '@opentiny/vue';
+import TinyThemeTool from '@opentiny/vue-theme/theme-tool.js';
+import { useAppStore } from '@/store';
+import Footer from '@/components/footer/index.vue';
+import NavBar from '@/components/navbar/index.vue';
+import Theme from '@/components/theme/index.vue';
+import Menu from '@/components/menu/index.vue';
+import { DefaultTheme } from '@/components/theme/type';
+import PageLayout from './page-layout.vue';
+// 动态切换
+const appStore = useAppStore();
+const changefooter = ref('#fff');
+
+// 切换简约模式，图标按钮
+const top = ref('10px');
+
+// 判断是否显示设置图标
+const switchSet = () => {
+  appStore.updateSettings({ Settings: true });
+};
+
+// 是否显示切换框架结构
+const myPattern = ref('legend');
+
+// 主题配置
+const disTheme = ref(false);
+const theme = new TinyThemeTool()
+const themeVisible = () => {
+  disTheme.value = !disTheme.value;
+};
+
+watch(appStore.$state, (newValue, oldValue) => {
+  if (!newValue.navbar) {
+    myPattern.value = 'simple';
+  } else if (!newValue.footer) {
+    myPattern.value = 'fashion';
+  } else if (!newValue.menu) {
+    myPattern.value = 'classic';
+  } else {
+    myPattern.value = 'legend';
+  }
+  appStore.footer ? (top.value = '10px') : (top.value = '60px');
+});
+
+watch(appStore.$state, (newValue, oldValue) => {
+  if (newValue.theme === 'dark') {
+    changefooter.value = '#262323;';
+  } else {
+    changefooter.value = '#fff;';
+  }
+});
+// 初始化默认主题
+onMounted(() => {
+  appStore.updateSettings({ theme: 'light' });
+  theme.changeTheme(DefaultTheme);
+  appStore.updateSettings({ themelist: 'default' });
+});
+</script>
+
+<style lang="less" scoped>
+.layout {
+  width: 100%;
+  height: 100%;
+}
+
+.layout-navbar {
+  position: fixed;
+  left: 0;
+  z-index: 999;
+  width: 100%;
+  height: 60px;
+  background-color: #fff;
+  box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.2);
+}
+
+.menu-wrapper {
+  width: inherit;
+  height: 92vh;
+  margin-top: v-bind(top);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.global-setting {
+  position: fixed;
+  top: 280px;
+  right: 0;
+  z-index: 99;
+  width: 30px;
+  height: 30px;
+}
+
+.layout :deep(.tiny-container .tiny-container__aside) {
+  z-index: 100;
+  background: #fff;
+  border-left: 0px solid #ccc;
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+//.layout :deep(.tiny-container .tiny-container__main) {
+//  color: #ccc;
+//  background-color: #f5f6f7;
+//}
+
+.layout :deep(.layout-content) {
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+
+.layout :deep(.tiny-container .tiny-container__footer) {
+  display: none;
+  padding-top: 15px;
+  justify-content: center;
+  background-color: #f5f6f7;
+}
+
+// 组件无法固定非message的modal类型距离顶部距离
+:deep(.tiny-modal__box) {
+  top: 8px !important;
+}
+
+// 路由子菜单选中后的样式
+:deep(.tiny-tree-node__children .tiny-tree-node__content) {
+  .tree-node-name {
+    margin-left: 28px !important;
+    padding-left: 6px !important;
+  }
+}
+
+:deep(.tiny-tree-node__children > .tree-node-body) {
+  padding-left: 50px;
+}
+
+.theme-box {
+  position: fixed;
+  top: 88%;
+  right: 30px;
+  z-index: 99;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background-color: #fff;
+  border-radius: 100%;
+  cursor: pointer;
+
+  img {
+    display: block;
+    width: inherit;
+    height: inherit;
+  }
+}
+
+.layout :deep(.tiny-button.tiny-button--primary) {
+  //color: var(--ti-button-primary-text-color);
+  //fill: var(--ti-button-primary-text-color);
+  border-color: #002FA7;
+  background-color: #002FA7;
+}
+
+.layout :deep(.tiny-button.tiny-button--primary.is-plain) {
+  //color: var(--ti-button-primary-plain-text-color);
+  fill: var(--ti-button-primary-plain-text-color);
+  border-color: var(--ti-button-primary-plain-border-color);
+  background-color: var(--ti-button-primary-plain-bg-color);
+}
+
+.layout :deep(.tiny-split-pane.left-pane, .tiny-split-pane.right-pane) {
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+.layout :deep(.tiny-split-wrapper) {
+  --tv-Split-wrapper-border-color: var(--tv-color-border, #c2c2c2);
+  --tv-Split-trigger-icon-line-color: var(--tv-color-icon, #808080);
+  --tv-Split-trigger-icon-line-color-hover: var(--tv-color-icon-hover, #191919);
+  --tv-Split-wrapper-radius-size: var(--tv-border-radius-lg, 8px);
+  --tv-Split-trigger-line-bg-hover: var(--tv-color-border-active-control, #002FA7);
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--tv-Split-wrapper-radius-size);
+  border: 1px solid var(--tv-Split-wrapper-border-color);
+}
+
+.layout :deep(.tiny-picker .tiny-date-editor.tiny-input, .tiny-picker .tiny-date-editor.tiny-input__inner) {
+  width: 260px;
+}
+
+.layout :deep(.tiny-button.tiny-button--danger.is-disabled,
+.tiny-button.tiny-button--danger.is-disabled:active,
+.tiny-button.tiny-button--danger.is-disabled:focus,
+.tiny-button.tiny-button--danger.is-disabled:hover) {
+  color: var(--ti-button-danger-disabled-text-color);
+  fill: var(--ti-button-danger-disabled-text-color);
+  border-color: #adb0b8;
+  background-color: #adb0b8;
+}
+
+.layout :deep(.tiny-button.tiny-button--success.is-disabled,
+.tiny-button.tiny-button--success.is-disabled:active,
+.tiny-button.tiny-button--success.is-disabled:focus,
+.tiny-button.tiny-button--success.is-disabled:hover) {
+  color: var(--ti-button-danger-disabled-text-color);
+  fill: var(--ti-button-danger-disabled-text-color);
+  border-color: #adb0b8;
+  background-color: #adb0b8;
+}
+
+.layout :deep(.tiny-button.tiny-button--info.is-disabled,
+.tiny-button.tiny-button--info.is-disabled:active,
+.tiny-button.tiny-button--info.is-disabled:focus,
+.tiny-button.tiny-button--info.is-disabled:hover) {
+  color: var(--ti-button-danger-disabled-text-color);
+  fill: var(--ti-button-danger-disabled-text-color);
+  border-color: #adb0b8;
+  background-color: #adb0b8;
+}
+
+.layout :deep(.tiny-button.tiny-button--warning.is-disabled,
+.tiny-button.tiny-button--warning.is-disabled:active,
+.tiny-button.tiny-button--warning.is-disabled:focus,
+.tiny-button.tiny-button--warning.is-disabled:hover) {
+  color: var(--ti-button-danger-disabled-text-color);
+  fill: var(--ti-button-danger-disabled-text-color);
+  border-color: #adb0b8;
+  background-color: #adb0b8;
+}
+
+.layout :deep(.tiny-button.tiny-button--primary.is-disabled,
+.tiny-button.tiny-button--primary.is-disabled:active,
+.tiny-button.tiny-button--primary.is-disabled:focus,
+.tiny-button.tiny-button--primary.is-disabled:hover) {
+  color: var(--ti-button-danger-disabled-text-color);
+  fill: var(--ti-button-danger-disabled-text-color);
+  border-color: #adb0b8;
+  background-color: #adb0b8;
+}
+
+.layout :deep(.tiny-split-pane.left-pane, .tiny-split-pane.right-pane) {
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+//.layout :deep {
+//  button svg,
+//  button polygon,
+//  button path,
+//  span.ql-picker-label svg,
+//  span.ql-picker-label polygon,
+//  span.ql-picker-label path {
+//    fill: #fff;
+//  }
+//}
+</style>
+
+<style>
+.popover-cls {
+
+}
+
+.popover-cls .tiny-popover__title {
+  font-size: 12px !important;
+}
+</style>

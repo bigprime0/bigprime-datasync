@@ -1,0 +1,72 @@
+# 生产环境配置
+# 用于覆盖默认的application.yml配置
+
+# 服务器配置
+server:
+  port: ${SERVER_PORT:8080}
+
+# Spring配置
+spring:
+  # 应用名称
+  application:
+    name: bigprime-datasync
+  
+  # 静态资源配置 - 支持外部static目录
+  web:
+    resources:
+      static-locations:
+        - file:${BACKEND_HOME:${APP_HOME:/opt/bigprime-datasync}/backend}/static/  # 外部static目录（优先级最高）
+        - classpath:/static/                                # 类路径static目录
+  
+  # 数据源配置（通过环境变量注入）
+  datasource:
+    url: ${DATASOURCE_URL}
+    username: ${DATASOURCE_USERNAME}
+    password: ${DATASOURCE_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1500000
+      # 每隔 2 分钟 keepalive 心跳，防止连接被 MySQL 服务端静默关闭
+      keepalive-time: 120000
+      validation-timeout: 5000
+
+# 日志配置
+logging:
+  level:
+    com.bigprime: INFO
+    org.springframework.web: WARN
+  file:
+    name: ${BACKEND_HOME:${APP_HOME:/opt/bigprime-datasync}/backend}/logs/bigprime-datasync.log
+
+# Python KernelGateway 配置
+python:
+  # embedded: 使用 plugins/python-runtime/ 下的嵌入式 Python（推荐，无需目标机器安装 Python）
+  # system:   使用系统已安装的 Python 环境
+  runtime-type: embedded
+  kernel-gateway:
+    port: ${PYTHON_KERNEL_GATEWAY_PORT:8888}
+    auto-start: true
+    start-timeout: 60
+    idle-timeout-minutes: 30
+
+# BigPrime自定义配置
+bigprime:
+  # 数据目录
+  data:
+    path: ${BACKEND_HOME:${APP_HOME:/opt/bigprime-datasync}/backend}/data
+  # SeaTunnel 文档路径（支持用环境变量指定给其他路径）
+  seatunnel:
+    docs-path: ${SEATUNNEL_DOCS_PATH:docs/seatunnel-2.3.12}
+  # 本地文件上传目录（SeaTunnel LocalFile Source 使用）
+  localfile:
+    upload-dir: ${LOCALFILE_UPLOAD_DIR:${bigprime.data.path}/uploadfile}
+  # SkyWalking配置
+  skywalking:
+    enabled: ${SKYWALKING_ENABLED:true}
+    agent-path: ${APP_HOME:/opt/bigprime-datasync}/plugins/skywalking-agent/skywalking-agent.jar
+    service-name: ${SKYWALKING_SERVICE_NAME:bigprime-datasync-backend}
+    collector: ${SKYWALKING_COLLECTOR:www.bigprime.cn:11800}

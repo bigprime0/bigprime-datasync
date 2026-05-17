@@ -1,0 +1,98 @@
+# Action执行引擎Worker节点配置
+
+server:
+  port: 6505
+
+spring:
+  application:
+    name: bigprime-action-worker
+  servlet:
+    multipart:
+      max-request-size: 100MB
+      max-file-size: 1024MB
+
+# Actuator 和 Prometheus 配置
+management:
+  endpoints:
+    web:
+      exposure:
+        # 暴露所有端点，包括 prometheus、health、metrics 等
+        include: "*"
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      # 排除Redis健康检查，避免启动时Redis不可用导致警告
+      show-components: always
+    prometheus:
+      enabled: true
+  health:
+    redis:
+      enabled: false
+    neo4j:
+      enabled: false
+    mongo:
+      enabled: false
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        # Prometheus 服务器地址（用于 Pushgateway 模式，可选）
+        pushgateway:
+          enabled: false
+          base-url: ${PROMETHEUS_PUSHGATEWAY_URL:http://www.bigprime.cn:9090}
+    # 启用系统指标监控
+    enable:
+      jvm: true
+      process: true
+      system: true
+      logback: true
+      tomcat: true
+    tags:
+      application: ${spring.application.name}
+      worker_id: ${action.worker.id}
+      # 主机标识
+      host: ${HOSTNAME:localhost}
+      instance: ${spring.cloud.client.ip-address:localhost}:${server.port}
+
+# Action执行引擎Worker节点配置
+action:
+  # 启用旧的ActionMessageListener（用于调试）
+  listener:
+    enabled: true
+  worker:
+    # 工作节点ID，每个实例必须有唯一的ID
+    # 可以通过环境变量WORKER_ID设置，默认为worker-${random.uuid}
+    id: ${WORKER_ID:worker-${random.uuid}}
+    # 工作节点名称
+    name: Action Worker Node
+    # 工作节点描述
+    description: 分布式Action执行引擎工作节点
+    # 最大同时执行的任务数
+    max-concurrent-tasks: ${WORKER_MAX_TASKS:10}
+    # 集群注册中心地址
+    registry:
+      enabled: true
+      url: ${CLUSTER_REGISTRY_URL:http://localhost:6506}
+      heartbeat-interval: 15  # 心跳间隔（秒）
+
+# 集群管理配置
+cluster:
+  management:
+    # 集群管理中心地址（用于上报任务历史）
+    url: ${CLUSTER_MANAGEMENT_URL:http://localhost:6506}
+
+# SkyWalking配置（仅供配置参考，实际加载由启动脚本控制）
+bigprime:
+  skywalking:
+    enabled: ${SKYWALKING_ENABLED:true}
+    agent-path: ${BIGPRIME_HOME:..}/plugins/skywalking-agent/skywalking-agent.jar
+    service-name: ${SKYWALKING_SERVICE_NAME:bigprime-datasync-worker}
+    collector: ${SKYWALKING_COLLECTOR:www.bigprime.cn:11800}
+
+logging:
+  level:
+    root: INFO
+    com.bigprime.action: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

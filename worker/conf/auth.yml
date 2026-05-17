@@ -1,0 +1,10 @@
+# Worker节点API认证配置
+# 配置无需认证的路径白名单
+auth:
+  # 允许匿名访问的路径列表
+  permitAll:
+    - /action/**
+    - /api/worker/**
+    - /actuator/**
+    - /swagger-ui/**
+    - /v3/api-docs/**

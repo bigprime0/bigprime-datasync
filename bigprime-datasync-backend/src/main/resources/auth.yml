@@ -1,0 +1,40 @@
+auth:
+  ignore_urls:
+    # 静态资源（前端页面）
+    - /
+    - /index.html
+    - /favicon.ico
+    - /assets/**
+    - /static/**
+    - /images/**
+    - /*.png
+    - /*.jpg
+    - /*.ico
+    - /*.svg
+    - /*.webp
+    # 认证接口（登录/退出/Token校验，无需鉴权）
+    - /auth/login
+    - /auth/logout
+    - /auth/check-token/**
+    # API接口
+    - /api/dag/**
+    - /api/connector/metadata/**  # 连接器元数据接口（公开）
+    - /api/sql-api/invoke/**  # SQL API调用接口，暂不使用平台登录验证，后续考虑apikey方式
+    - /api/python/invoke  # Python脚本HTTP服务调用接口，使用X-API-Key Header自鉴权
+    - /ws/**  # WebSocket端点（连接器/DAG/集群/告警等各模块 SockJS 端点）
+    - /lsp/**  # Python LSP WebSocket端点（原生WS，避开SockJS /ws 拦截）
+    - /worker/**  # Worker端点
+    - /api/cluster/ws-test/**  # WebSocket测试接口
+    - /cluster/worker/register  # Worker节点注册
+    - /cluster/worker/heartbeat  # Worker心跳上报
+    - /api/cluster/task-history/**  # Worker任务历史相关接口
+    - /api/crawler/tool/proxy  # 爬虫工具代理接口
+    - /api/ai/chat/session/*/stream  # AI 对话 SSE 流式接口（EventSource 不支持自定义 Header，通过 URL token 参数鉴权）
+    - /api/ai/chat/openai/completions  # GenuiChat OpenAI 兼容流式接口（GenUI SDK 直接调用，需绕过登录拦截）
+    - /api/ai/agent/stream  # Agent 流式执行 SSE 接口（EventSource 不支持自定义 Header）
+    - /api/crawler/task/agent/stream  # CrawlerAgent SSE 流式执行接口
+    - /api/ai/search/test  # 搜索引擎连通测试接口（前端测试页直接调用）
+    - /api/kafka/manage/consume/stream  # Kafka SSE 消费流接口（EventSource 不支持自定义 Header，通过 URL token 参数鉴权）
+    - /open/v1/**  # AI 开放接口（外部 App API Key 认证，由 ApiKeyFilter 处理）
+    - /error  # Tomcat 错误转发端点（防止内部异常处理时再次被拦截）
+    - /mcp/**  # Spring AI MCP Server 端点（SSE连接 + 消息处理，外部 MCP 客户端直接访问）
